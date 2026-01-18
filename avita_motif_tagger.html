@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>AViTA – Motif Tagger</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand-green: #3F3E20;
+            --brand-terracotta: #BE4A01;
+            --brand-sand: #C5C29F;
+            --bg: #F6F5EB;
+            --bg-card: #ffffff;
+            --text-dark: #0A0703;
+            
+            --color-deixis: #e74c3c;
+            --color-tense: #3498db;
+            --color-aspect: #9b59b6;
+            --color-modality: #1abc9c;
+            --color-polarity: #e67e22;
+            --color-number: #27ae60;
+            --color-person: #f39c12;
+            --color-other: #95a5a6;
+            --color-unknown: #bdc3c7;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Nunito', sans-serif; 
+            background: var(--bg); 
+            color: var(--text-dark); 
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: var(--brand-green);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            color: #F6F5EB;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        
+        .logo-badge {
+            background: var(--brand-terracotta);
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.6rem;
+        }
+        
+        .motif-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .motif-nav button {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        
+        .motif-nav button:hover { background: rgba(255,255,255,0.25); }
+        .motif-nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+        
+        .motif-counter {
+            font-size: 0.9rem;
+            min-width: 80px;
+            text-align: center;
+        }
+        
+        .hidden { display: none !important; }
+        
+        /* Welcome Screen */
+        .screen {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        
+        .welcome-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        
+        .welcome-icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+        }
+        
+        .welcome-card h1 {
+            font-family: 'Quicksand', sans-serif;
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            color: var(--brand-green);
+        }
+        
+        .welcome-card p {
+            color: #666;
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+        
+        .stats-row {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-bottom: 28px;
+            padding: 16px;
+            background: var(--bg);
+            border-radius: 12px;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--brand-terracotta);
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: #888;
+        }
+        
+        .btn-primary {
+            background: var(--brand-terracotta);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(190, 74, 1, 0.3);
+        }
+        
+        /* Tagging Screen */
+        #taggingScreen {
+            padding: 20px;
+            padding-bottom: 100px;
+        }
+        
+        .motif-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+        
+        .motif-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .motif-title {
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--brand-green);
+        }
+        
+        .motif-type {
+            background: var(--brand-sand);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .pattern-display {
+            background: #2d2d2d;
+            color: #66d9ef;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        
+        .frequency-badge {
+            display: inline-block;
+            background: var(--bg);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 16px;
+        }
+        
+        /* Audio Samples */
+        .samples-section h3 {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 12px;
+        }
+        
+        .samples-grid {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .sample-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: var(--bg);
+            border: 2px solid transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+        
+        .sample-btn:hover { border-color: var(--brand-sand); }
+        .sample-btn.playing { 
+            border-color: var(--brand-terracotta); 
+            background: #fff5f0;
+        }
+        
+        .sample-btn .play-icon {
+            width: 24px;
+            height: 24px;
+            background: var(--brand-terracotta);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.7rem;
+        }
+        
+        /* Category Selection */
+        .category-section {
+            margin-top: 24px;
+        }
+        
+        .category-section h3 {
+            font-size: 1rem;
+            margin-bottom: 12px;
+            color: var(--brand-green);
+        }
+        
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+        }
+        
+        .category-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 14px;
+            background: var(--bg);
+            border: 2px solid transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .category-btn:hover { background: white; }
+        .category-btn.selected { 
+            border-color: currentColor;
+            background: white;
+        }
+        
+        .category-btn .cat-icon {
+            font-size: 1.1rem;
+        }
+        
+        /* Subcategories */
+        .subcategories {
+            margin-top: 16px;
+            padding: 16px;
+            background: var(--bg);
+            border-radius: 12px;
+        }
+        
+        .subcategories h4 {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .subcategory-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .subcategory-chip {
+            padding: 8px 14px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        
+        .subcategory-chip:hover { border-color: #aaa; }
+        .subcategory-chip.selected {
+            background: var(--brand-green);
+            color: white;
+            border-color: var(--brand-green);
+        }
+        
+        /* Notes */
+        .notes-section {
+            margin-top: 20px;
+        }
+        
+        .notes-section label {
+            display: block;
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        
+        .notes-section textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .notes-section textarea:focus {
+            outline: none;
+            border-color: var(--brand-terracotta);
+        }
+        
+        /* Navigation Footer */
+        .nav-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid var(--brand-green);
+            color: var(--brand-green);
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-secondary:hover {
+            background: var(--brand-green);
+            color: white;
+        }
+        
+        .btn-next {
+            background: var(--brand-terracotta);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 25px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        
+        .btn-next:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(190, 74, 1, 0.3);
+        }
+        
+        /* Progress Bar */
+        .progress-container {
+            padding: 0 20px;
+            margin-bottom: 20px;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background: var(--brand-sand);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--brand-terracotta);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+        
+        /* Results Screen */
+        #resultsScreen {
+            padding: 24px;
+        }
+        
+        .results-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+        
+        .results-card h2 {
+            font-family: 'Quicksand', sans-serif;
+            color: var(--brand-green);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        #resultsSummary {
+            margin-bottom: 24px;
+        }
+        
+        .tag-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: white;
+            margin: 4px;
+        }
+        
+        .json-preview {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 16px;
+            border-radius: 10px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.75rem;
+            max-height: 300px;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        
+        .results-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        /* Skip indicator */
+        .skip-hint {
+            font-size: 0.8rem;
+            color: #999;
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        /* Loading indicator */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--brand-sand);
+            border-top-color: var(--brand-terracotta);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Audio error state */
+        .audio-error {
+            background: #fff5f5;
+            border: 1px solid #ffcdd2;
+            padding: 12px;
+            border-radius: 8px;
+            color: #c62828;
+            font-size: 0.85rem;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+    <div class="logo">
+        🔊 AViTA <span class="logo-badge">Motif Tagger</span>
+    </div>
+    <div class="motif-nav hidden" id="motifNav">
+        <button id="prevBtn" onclick="loadMotif(currentMotifIdx - 1)">‹</button>
+        <span class="motif-counter" id="motifCounter">1 / 40</span>
+        <button id="nextBtn" onclick="loadMotif(currentMotifIdx + 1)">›</button>
+    </div>
+</header>
+
+<!-- Welcome Screen -->
+<div class="screen" id="welcomeScreen">
+    <div class="welcome-card">
+        <div class="welcome-icon">🎵</div>
+        <h1>Acoustic Motif Tagger</h1>
+        <p>Help us understand the grammar of this language by tagging recurring sound patterns with their meanings.</p>
+        
+        <div class="stats-row">
+            <div class="stat">
+                <div class="stat-value" id="motifCount">40</div>
+                <div class="stat-label">Motifs discovered</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="sampleCount">120</div>
+                <div class="stat-label">Audio samples</div>
+            </div>
+        </div>
+        
+        <button class="btn-primary" onclick="startTagging()">Start Tagging →</button>
+    </div>
+</div>
+
+<!-- Tagging Screen -->
+<div id="taggingScreen" class="hidden">
+    <div class="progress-container">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        </div>
+    </div>
+    
+    <div class="motif-card" id="motifCard">
+        <!-- Content loaded dynamically -->
+    </div>
+    
+    <div class="nav-footer">
+        <button class="btn-secondary" onclick="skipMotif()">Skip</button>
+        <button class="btn-next" onclick="saveAndNext()">
+            Save & Next <span>→</span>
+        </button>
+    </div>
+</div>
+
+<!-- Results Screen -->
+<div class="screen hidden" id="resultsScreen">
+    <div class="results-card" style="max-width: 600px; width: 100%;">
+        <h2>✅ Tagging Complete!</h2>
+        
+        <div id="resultsSummary"></div>
+        
+        <h3 style="margin-bottom: 10px; font-size: 0.9rem; color: #666;">Export Data</h3>
+        <div class="json-preview" id="jsonPreview"></div>
+        
+        <div class="results-actions">
+            <button class="btn-secondary" onclick="location.reload()">Start Over</button>
+            <button class="btn-primary" onclick="downloadResults()">📥 Download JSON</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ============ EMBEDDED MOTIF DATA ============
+const MOTIF_SAMPLES = [
+  {"id":"motif_000_0","motif_id":"motif_000","type":"bigram","pattern":"U62_U33","frequency":146,"audio_file":"motif_samples/motif_000_bigram_0.wav","start_time":1.026,"duration":0.19,"tags":{}},
+  {"id":"motif_000_1","motif_id":"motif_000","type":"bigram","pattern":"U62_U33","frequency":146,"audio_file":"motif_samples/motif_000_bigram_1.wav","start_time":2.527,"duration":0.19,"tags":{}},
+  {"id":"motif_000_2","motif_id":"motif_000","type":"bigram","pattern":"U62_U33","frequency":146,"audio_file":"motif_samples/motif_000_bigram_2.wav","start_time":3.207,"duration":0.19,"tags":{}},
+  {"id":"motif_001_0","motif_id":"motif_001","type":"bigram","pattern":"U48_U43","frequency":142,"audio_file":"motif_samples/motif_001_bigram_0.wav","start_time":6.169,"duration":0.19,"tags":{}},
+  {"id":"motif_001_1","motif_id":"motif_001","type":"bigram","pattern":"U48_U43","frequency":142,"audio_file":"motif_samples/motif_001_bigram_1.wav","start_time":9.572,"duration":0.19,"tags":{}},
+  {"id":"motif_001_2","motif_id":"motif_001","type":"bigram","pattern":"U48_U43","frequency":142,"audio_file":"motif_samples/motif_001_bigram_2.wav","start_time":15.516,"duration":0.19,"tags":{}},
+  {"id":"motif_002_0","motif_id":"motif_002","type":"bigram","pattern":"U33_U48","frequency":128,"audio_file":"motif_samples/motif_002_bigram_0.wav","start_time":9.032,"duration":0.19,"tags":{}},
+  {"id":"motif_002_1","motif_id":"motif_002","type":"bigram","pattern":"U33_U48","frequency":128,"audio_file":"motif_samples/motif_002_bigram_1.wav","start_time":30.647,"duration":0.19,"tags":{}},
+  {"id":"motif_002_2","motif_id":"motif_002","type":"bigram","pattern":"U33_U48","frequency":128,"audio_file":"motif_samples/motif_002_bigram_2.wav","start_time":35.33,"duration":0.19,"tags":{}},
+  {"id":"motif_003_0","motif_id":"motif_003","type":"bigram","pattern":"U35_U97","frequency":124,"audio_file":"motif_samples/motif_003_bigram_0.wav","start_time":23.922,"duration":0.19,"tags":{}},
+  {"id":"motif_003_1","motif_id":"motif_003","type":"bigram","pattern":"U35_U97","frequency":124,"audio_file":"motif_samples/motif_003_bigram_1.wav","start_time":31.668,"duration":0.19,"tags":{}},
+  {"id":"motif_003_2","motif_id":"motif_003","type":"bigram","pattern":"U35_U97","frequency":124,"audio_file":"motif_samples/motif_003_bigram_2.wav","start_time":36.011,"duration":0.19,"tags":{}},
+  {"id":"motif_004_0","motif_id":"motif_004","type":"bigram","pattern":"U33_U81","frequency":94,"audio_file":"motif_samples/motif_004_bigram_0.wav","start_time":1.046,"duration":0.19,"tags":{}},
+  {"id":"motif_004_1","motif_id":"motif_004","type":"bigram","pattern":"U33_U81","frequency":94,"audio_file":"motif_samples/motif_004_bigram_1.wav","start_time":8.511,"duration":0.19,"tags":{}},
+  {"id":"motif_004_2","motif_id":"motif_004","type":"bigram","pattern":"U33_U81","frequency":94,"audio_file":"motif_samples/motif_004_bigram_2.wav","start_time":9.752,"duration":0.19,"tags":{}},
+  {"id":"motif_005_0","motif_id":"motif_005","type":"bigram","pattern":"U55_U25","frequency":89,"audio_file":"motif_samples/motif_005_bigram_0.wav","start_time":0,"duration":0.19,"tags":{}},
+  {"id":"motif_005_1","motif_id":"motif_005","type":"bigram","pattern":"U55_U25","frequency":89,"audio_file":"motif_samples/motif_005_bigram_1.wav","start_time":0.305,"duration":0.19,"tags":{}},
+  {"id":"motif_005_2","motif_id":"motif_005","type":"bigram","pattern":"U55_U25","frequency":89,"audio_file":"motif_samples/motif_005_bigram_2.wav","start_time":3.387,"duration":0.19,"tags":{}},
+  {"id":"motif_006_0","motif_id":"motif_006","type":"bigram","pattern":"U97_U36","frequency":88,"audio_file":"motif_samples/motif_006_bigram_0.wav","start_time":30.927,"duration":0.19,"tags":{}},
+  {"id":"motif_006_1","motif_id":"motif_006","type":"bigram","pattern":"U97_U36","frequency":88,"audio_file":"motif_samples/motif_006_bigram_1.wav","start_time":36.872,"duration":0.19,"tags":{}},
+  {"id":"motif_006_2","motif_id":"motif_006","type":"bigram","pattern":"U97_U36","frequency":88,"audio_file":"motif_samples/motif_006_bigram_2.wav","start_time":37.752,"duration":0.19,"tags":{}},
+  {"id":"motif_007_0","motif_id":"motif_007","type":"bigram","pattern":"U13_U33","frequency":86,"audio_file":"motif_samples/motif_007_bigram_0.wav","start_time":8.051,"duration":0.19,"tags":{}},
+  {"id":"motif_007_1","motif_id":"motif_007","type":"bigram","pattern":"U13_U33","frequency":86,"audio_file":"motif_samples/motif_007_bigram_1.wav","start_time":10.232,"duration":0.19,"tags":{}},
+  {"id":"motif_007_2","motif_id":"motif_007","type":"bigram","pattern":"U13_U33","frequency":86,"audio_file":"motif_samples/motif_007_bigram_2.wav","start_time":20.76,"duration":0.19,"tags":{}},
+  {"id":"motif_008_0","motif_id":"motif_008","type":"bigram","pattern":"U32_U47","frequency":82,"audio_file":"motif_samples/motif_008_bigram_0.wav","start_time":176.051,"duration":0.19,"tags":{}},
+  {"id":"motif_008_1","motif_id":"motif_008","type":"bigram","pattern":"U32_U47","frequency":82,"audio_file":"motif_samples/motif_008_bigram_1.wav","start_time":179.634,"duration":0.19,"tags":{}},
+  {"id":"motif_008_2","motif_id":"motif_008","type":"bigram","pattern":"U32_U47","frequency":82,"audio_file":"motif_samples/motif_008_bigram_2.wav","start_time":181.175,"duration":0.19,"tags":{}},
+  {"id":"motif_009_0","motif_id":"motif_009","type":"bigram","pattern":"U25_U55","frequency":79,"audio_file":"motif_samples/motif_009_bigram_0.wav","start_time":0.085,"duration":0.19,"tags":{}},
+  {"id":"motif_009_1","motif_id":"motif_009","type":"bigram","pattern":"U25_U55","frequency":79,"audio_file":"motif_samples/motif_009_bigram_1.wav","start_time":3.408,"duration":0.19,"tags":{}},
+  {"id":"motif_009_2","motif_id":"motif_009","type":"bigram","pattern":"U25_U55","frequency":79,"audio_file":"motif_samples/motif_009_bigram_2.wav","start_time":3.728,"duration":0.19,"tags":{}},
+  {"id":"motif_010_0","motif_id":"motif_010","type":"bigram","pattern":"U98_U35","frequency":79,"audio_file":"motif_samples/motif_010_bigram_0.wav","start_time":14.115,"duration":0.19,"tags":{}},
+  {"id":"motif_010_1","motif_id":"motif_010","type":"bigram","pattern":"U98_U35","frequency":79,"audio_file":"motif_samples/motif_010_bigram_1.wav","start_time":27.405,"duration":0.19,"tags":{}},
+  {"id":"motif_010_2","motif_id":"motif_010","type":"bigram","pattern":"U98_U35","frequency":79,"audio_file":"motif_samples/motif_010_bigram_2.wav","start_time":29.386,"duration":0.19,"tags":{}},
+  {"id":"motif_011_0","motif_id":"motif_011","type":"bigram","pattern":"U48_U02","frequency":79,"audio_file":"motif_samples/motif_011_bigram_0.wav","start_time":30.967,"duration":0.19,"tags":{}},
+  {"id":"motif_011_1","motif_id":"motif_011","type":"bigram","pattern":"U48_U02","frequency":79,"audio_file":"motif_samples/motif_011_bigram_1.wav","start_time":43.937,"duration":0.19,"tags":{}},
+  {"id":"motif_011_2","motif_id":"motif_011","type":"bigram","pattern":"U48_U02","frequency":79,"audio_file":"motif_samples/motif_011_bigram_2.wav","start_time":55.225,"duration":0.19,"tags":{}},
+  {"id":"motif_012_0","motif_id":"motif_012","type":"bigram","pattern":"U36_U74","frequency":79,"audio_file":"motif_samples/motif_012_bigram_0.wav","start_time":40.154,"duration":0.19,"tags":{}},
+  {"id":"motif_012_1","motif_id":"motif_012","type":"bigram","pattern":"U36_U74","frequency":79,"audio_file":"motif_samples/motif_012_bigram_1.wav","start_time":44.677,"duration":0.19,"tags":{}},
+  {"id":"motif_012_2","motif_id":"motif_012","type":"bigram","pattern":"U36_U74","frequency":79,"audio_file":"motif_samples/motif_012_bigram_2.wav","start_time":61.99,"duration":0.19,"tags":{}},
+  {"id":"motif_013_0","motif_id":"motif_013","type":"bigram","pattern":"U91_U92","frequency":78,"audio_file":"motif_samples/motif_013_bigram_0.wav","start_time":7.23,"duration":0.19,"tags":{}},
+  {"id":"motif_013_1","motif_id":"motif_013","type":"bigram","pattern":"U91_U92","frequency":78,"audio_file":"motif_samples/motif_013_bigram_1.wav","start_time":31.628,"duration":0.19,"tags":{}},
+  {"id":"motif_013_2","motif_id":"motif_013","type":"bigram","pattern":"U91_U92","frequency":78,"audio_file":"motif_samples/motif_013_bigram_2.wav","start_time":33.489,"duration":0.19,"tags":{}},
+  {"id":"motif_014_0","motif_id":"motif_014","type":"bigram","pattern":"U36_U33","frequency":78,"audio_file":"motif_samples/motif_014_bigram_0.wav","start_time":15.977,"duration":0.19,"tags":{}},
+  {"id":"motif_014_1","motif_id":"motif_014","type":"bigram","pattern":"U36_U33","frequency":78,"audio_file":"motif_samples/motif_014_bigram_1.wav","start_time":36.091,"duration":0.19,"tags":{}},
+  {"id":"motif_014_2","motif_id":"motif_014","type":"bigram","pattern":"U36_U33","frequency":78,"audio_file":"motif_samples/motif_014_bigram_2.wav","start_time":37.772,"duration":0.19,"tags":{}},
+  {"id":"motif_015_0","motif_id":"motif_015","type":"trigram","pattern":"U62_U33_U33","frequency":56,"audio_file":"motif_samples/motif_015_trigram_0.wav","start_time":5.669,"duration":0.21,"tags":{}},
+  {"id":"motif_015_1","motif_id":"motif_015","type":"trigram","pattern":"U62_U33_U33","frequency":56,"audio_file":"motif_samples/motif_015_trigram_1.wav","start_time":6.97,"duration":0.21,"tags":{}},
+  {"id":"motif_015_2","motif_id":"motif_015","type":"trigram","pattern":"U62_U33_U33","frequency":56,"audio_file":"motif_samples/motif_015_trigram_2.wav","start_time":14.896,"duration":0.21,"tags":{}},
+  {"id":"motif_016_0","motif_id":"motif_016","type":"trigram","pattern":"U33_U48_U43","frequency":52,"audio_file":"motif_samples/motif_016_trigram_0.wav","start_time":30.647,"duration":0.21,"tags":{}},
+  {"id":"motif_016_1","motif_id":"motif_016","type":"trigram","pattern":"U33_U48_U43","frequency":52,"audio_file":"motif_samples/motif_016_trigram_1.wav","start_time":35.33,"duration":0.21,"tags":{}},
+  {"id":"motif_016_2","motif_id":"motif_016","type":"trigram","pattern":"U33_U48_U43","frequency":52,"audio_file":"motif_samples/motif_016_trigram_2.wav","start_time":38.613,"duration":0.21,"tags":{}},
+  {"id":"motif_017_0","motif_id":"motif_017","type":"trigram","pattern":"U32_U32_U47","frequency":51,"audio_file":"motif_samples/motif_017_trigram_0.wav","start_time":176.031,"duration":0.21,"tags":{}},
+  {"id":"motif_017_1","motif_id":"motif_017","type":"trigram","pattern":"U32_U32_U47","frequency":51,"audio_file":"motif_samples/motif_017_trigram_1.wav","start_time":181.155,"duration":0.21,"tags":{}},
+  {"id":"motif_017_2","motif_id":"motif_017","type":"trigram","pattern":"U32_U32_U47","frequency":51,"audio_file":"motif_samples/motif_017_trigram_2.wav","start_time":182.576,"duration":0.21,"tags":{}},
+  {"id":"motif_018_0","motif_id":"motif_018","type":"trigram","pattern":"U81_U81_U82","frequency":50,"audio_file":"motif_samples/motif_018_trigram_0.wav","start_time":4.728,"duration":0.21,"tags":{}},
+  {"id":"motif_018_1","motif_id":"motif_018","type":"trigram","pattern":"U81_U81_U82","frequency":50,"audio_file":"motif_samples/motif_018_trigram_1.wav","start_time":17.598,"duration":0.21,"tags":{}},
+  {"id":"motif_018_2","motif_id":"motif_018","type":"trigram","pattern":"U81_U81_U82","frequency":50,"audio_file":"motif_samples/motif_018_trigram_2.wav","start_time":34.29,"duration":0.21,"tags":{}},
+  {"id":"motif_019_0","motif_id":"motif_019","type":"trigram","pattern":"U13_U33_U33","frequency":50,"audio_file":"motif_samples/motif_019_trigram_0.wav","start_time":8.051,"duration":0.21,"tags":{}},
+  {"id":"motif_019_1","motif_id":"motif_019","type":"trigram","pattern":"U13_U33_U33","frequency":50,"audio_file":"motif_samples/motif_019_trigram_1.wav","start_time":10.232,"duration":0.21,"tags":{}},
+  {"id":"motif_019_2","motif_id":"motif_019","type":"trigram","pattern":"U13_U33_U33","frequency":50,"audio_file":"motif_samples/motif_019_trigram_2.wav","start_time":22.321,"duration":0.21,"tags":{}},
+  {"id":"motif_020_0","motif_id":"motif_020","type":"trigram","pattern":"U33_U33_U48","frequency":49,"audio_file":"motif_samples/motif_020_trigram_0.wav","start_time":35.31,"duration":0.21,"tags":{}},
+  {"id":"motif_020_1","motif_id":"motif_020","type":"trigram","pattern":"U33_U33_U48","frequency":49,"audio_file":"motif_samples/motif_020_trigram_1.wav","start_time":38.593,"duration":0.21,"tags":{}},
+  {"id":"motif_020_2","motif_id":"motif_020","type":"trigram","pattern":"U33_U33_U48","frequency":49,"audio_file":"motif_samples/motif_020_trigram_2.wav","start_time":56.726,"duration":0.21,"tags":{}},
+  {"id":"motif_021_0","motif_id":"motif_021","type":"trigram","pattern":"U79_U79_U83","frequency":48,"audio_file":"motif_samples/motif_021_trigram_0.wav","start_time":4.889,"duration":0.21,"tags":{}},
+  {"id":"motif_021_1","motif_id":"motif_021","type":"trigram","pattern":"U79_U79_U83","frequency":48,"audio_file":"motif_samples/motif_021_trigram_1.wav","start_time":11.954,"duration":0.21,"tags":{}},
+  {"id":"motif_021_2","motif_id":"motif_021","type":"trigram","pattern":"U79_U79_U83","frequency":48,"audio_file":"motif_samples/motif_021_trigram_2.wav","start_time":16.297,"duration":0.21,"tags":{}},
+  {"id":"motif_022_0","motif_id":"motif_022","type":"trigram","pattern":"U11_U11_U91","frequency":48,"audio_file":"motif_samples/motif_022_trigram_0.wav","start_time":16.737,"duration":0.21,"tags":{}},
+  {"id":"motif_022_1","motif_id":"motif_022","type":"trigram","pattern":"U11_U11_U91","frequency":48,"audio_file":"motif_samples/motif_022_trigram_1.wav","start_time":39.193,"duration":0.21,"tags":{}},
+  {"id":"motif_022_2","motif_id":"motif_022","type":"trigram","pattern":"U11_U11_U91","frequency":48,"audio_file":"motif_samples/motif_022_trigram_2.wav","start_time":40.754,"duration":0.21,"tags":{}},
+  {"id":"motif_023_0","motif_id":"motif_023","type":"trigram","pattern":"U81_U82_U82","frequency":45,"audio_file":"motif_samples/motif_023_trigram_0.wav","start_time":0.425,"duration":0.21,"tags":{}},
+  {"id":"motif_023_1","motif_id":"motif_023","type":"trigram","pattern":"U81_U82_U82","frequency":45,"audio_file":"motif_samples/motif_023_trigram_1.wav","start_time":4.748,"duration":0.21,"tags":{}},
+  {"id":"motif_023_2","motif_id":"motif_023","type":"trigram","pattern":"U81_U82_U82","frequency":45,"audio_file":"motif_samples/motif_023_trigram_2.wav","start_time":17.618,"duration":0.21,"tags":{}},
+  {"id":"motif_024_0","motif_id":"motif_024","type":"trigram","pattern":"U84_U68_U68","frequency":45,"audio_file":"motif_samples/motif_024_trigram_0.wav","start_time":180.415,"duration":0.21,"tags":{}},
+  {"id":"motif_024_1","motif_id":"motif_024","type":"trigram","pattern":"U84_U68_U68","frequency":45,"audio_file":"motif_samples/motif_024_trigram_1.wav","start_time":180.495,"duration":0.21,"tags":{}},
+  {"id":"motif_024_2","motif_id":"motif_024","type":"trigram","pattern":"U84_U68_U68","frequency":45,"audio_file":"motif_samples/motif_024_trigram_2.wav","start_time":184.678,"duration":0.21,"tags":{}},
+  {"id":"motif_025_0","motif_id":"motif_025","type":"trigram","pattern":"U91_U91_U92","frequency":44,"audio_file":"motif_samples/motif_025_trigram_0.wav","start_time":31.608,"duration":0.21,"tags":{}},
+  {"id":"motif_025_1","motif_id":"motif_025","type":"trigram","pattern":"U91_U91_U92","frequency":44,"audio_file":"motif_samples/motif_025_trigram_1.wav","start_time":33.469,"duration":0.21,"tags":{}},
+  {"id":"motif_025_2","motif_id":"motif_025","type":"trigram","pattern":"U91_U91_U92","frequency":44,"audio_file":"motif_samples/motif_025_trigram_2.wav","start_time":40.794,"duration":0.21,"tags":{}},
+  {"id":"motif_026_0","motif_id":"motif_026","type":"trigram","pattern":"U33_U33_U81","frequency":43,"audio_file":"motif_samples/motif_026_trigram_0.wav","start_time":8.491,"duration":0.21,"tags":{}},
+  {"id":"motif_026_1","motif_id":"motif_026","type":"trigram","pattern":"U33_U33_U81","frequency":43,"audio_file":"motif_samples/motif_026_trigram_1.wav","start_time":14.916,"duration":0.21,"tags":{}},
+  {"id":"motif_026_2","motif_id":"motif_026","type":"trigram","pattern":"U33_U33_U81","frequency":43,"audio_file":"motif_samples/motif_026_trigram_2.wav","start_time":15.997,"duration":0.21,"tags":{}},
+  {"id":"motif_027_0","motif_id":"motif_027","type":"trigram","pattern":"U11_U91_U91","frequency":43,"audio_file":"motif_samples/motif_027_trigram_0.wav","start_time":39.213,"duration":0.21,"tags":{}},
+  {"id":"motif_027_1","motif_id":"motif_027","type":"trigram","pattern":"U11_U91_U91","frequency":43,"audio_file":"motif_samples/motif_027_trigram_1.wav","start_time":40.774,"duration":0.21,"tags":{}},
+  {"id":"motif_027_2","motif_id":"motif_027","type":"trigram","pattern":"U11_U91_U91","frequency":43,"audio_file":"motif_samples/motif_027_trigram_2.wav","start_time":45.198,"duration":0.21,"tags":{}},
+  {"id":"motif_028_0","motif_id":"motif_028","type":"trigram","pattern":"U41_U04_U04","frequency":42,"audio_file":"motif_samples/motif_028_trigram_0.wav","start_time":6.25,"duration":0.21,"tags":{}},
+  {"id":"motif_028_1","motif_id":"motif_028","type":"trigram","pattern":"U41_U04_U04","frequency":42,"audio_file":"motif_samples/motif_028_trigram_1.wav","start_time":26.624,"duration":0.21,"tags":{}},
+  {"id":"motif_028_2","motif_id":"motif_028","type":"trigram","pattern":"U41_U04_U04","frequency":42,"audio_file":"motif_samples/motif_028_trigram_2.wav","start_time":42.335,"duration":0.21,"tags":{}},
+  {"id":"motif_029_0","motif_id":"motif_029","type":"trigram","pattern":"U55_U55_U25","frequency":41,"audio_file":"motif_samples/motif_029_trigram_0.wav","start_time":0,"duration":0.21,"tags":{}},
+  {"id":"motif_029_1","motif_id":"motif_029","type":"trigram","pattern":"U55_U55_U25","frequency":41,"audio_file":"motif_samples/motif_029_trigram_1.wav","start_time":0.285,"duration":0.21,"tags":{}},
+  {"id":"motif_029_2","motif_id":"motif_029","type":"trigram","pattern":"U55_U55_U25","frequency":41,"audio_file":"motif_samples/motif_029_trigram_2.wav","start_time":3.448,"duration":0.21,"tags":{}},
+  {"id":"motif_030_0","motif_id":"motif_030","type":"fourgram","pattern":"U11_U11_U91_U91","frequency":41,"audio_file":"motif_samples/motif_030_fourgram_0.wav","start_time":39.193,"duration":0.23,"tags":{}},
+  {"id":"motif_030_1","motif_id":"motif_030","type":"fourgram","pattern":"U11_U11_U91_U91","frequency":41,"audio_file":"motif_samples/motif_030_fourgram_1.wav","start_time":40.754,"duration":0.23,"tags":{}},
+  {"id":"motif_030_2","motif_id":"motif_030","type":"fourgram","pattern":"U11_U11_U91_U91","frequency":41,"audio_file":"motif_samples/motif_030_fourgram_2.wav","start_time":45.177,"duration":0.23,"tags":{}},
+  {"id":"motif_031_0","motif_id":"motif_031","type":"fourgram","pattern":"U81_U81_U82_U82","frequency":38,"audio_file":"motif_samples/motif_031_fourgram_0.wav","start_time":4.728,"duration":0.23,"tags":{}},
+  {"id":"motif_031_1","motif_id":"motif_031","type":"fourgram","pattern":"U81_U81_U82_U82","frequency":38,"audio_file":"motif_samples/motif_031_fourgram_1.wav","start_time":17.598,"duration":0.23,"tags":{}},
+  {"id":"motif_031_2","motif_id":"motif_031","type":"fourgram","pattern":"U81_U81_U82_U82","frequency":38,"audio_file":"motif_samples/motif_031_fourgram_2.wav","start_time":34.29,"duration":0.23,"tags":{}},
+  {"id":"motif_032_0","motif_id":"motif_032","type":"fourgram","pattern":"U81_U82_U82_U82","frequency":37,"audio_file":"motif_samples/motif_032_fourgram_0.wav","start_time":4.748,"duration":0.23,"tags":{}},
+  {"id":"motif_032_1","motif_id":"motif_032","type":"fourgram","pattern":"U81_U82_U82_U82","frequency":37,"audio_file":"motif_samples/motif_032_fourgram_1.wav","start_time":17.618,"duration":0.23,"tags":{}},
+  {"id":"motif_032_2","motif_id":"motif_032","type":"fourgram","pattern":"U81_U82_U82_U82","frequency":37,"audio_file":"motif_samples/motif_032_fourgram_2.wav","start_time":34.31,"duration":0.23,"tags":{}},
+  {"id":"motif_033_0","motif_id":"motif_033","type":"fourgram","pattern":"U59_U59_U59_U77","frequency":35,"audio_file":"motif_samples/motif_033_fourgram_0.wav","start_time":34.85,"duration":0.23,"tags":{}},
+  {"id":"motif_033_1","motif_id":"motif_033","type":"fourgram","pattern":"U59_U59_U59_U77","frequency":35,"audio_file":"motif_samples/motif_033_fourgram_1.wav","start_time":46.659,"duration":0.23,"tags":{}},
+  {"id":"motif_033_2","motif_id":"motif_033","type":"fourgram","pattern":"U59_U59_U59_U77","frequency":35,"audio_file":"motif_samples/motif_033_fourgram_2.wav","start_time":57.386,"duration":0.23,"tags":{}},
+  {"id":"motif_034_0","motif_id":"motif_034","type":"fourgram","pattern":"U11_U11_U11_U91","frequency":34,"audio_file":"motif_samples/motif_034_fourgram_0.wav","start_time":16.717,"duration":0.23,"tags":{}},
+  {"id":"motif_034_1","motif_id":"motif_034","type":"fourgram","pattern":"U11_U11_U11_U91","frequency":34,"audio_file":"motif_samples/motif_034_fourgram_1.wav","start_time":39.173,"duration":0.23,"tags":{}},
+  {"id":"motif_034_2","motif_id":"motif_034","type":"fourgram","pattern":"U11_U11_U11_U91","frequency":34,"audio_file":"motif_samples/motif_034_fourgram_2.wav","start_time":40.734,"duration":0.23,"tags":{}},
+  {"id":"motif_035_0","motif_id":"motif_035","type":"fourgram","pattern":"U84_U68_U68_U68","frequency":34,"audio_file":"motif_samples/motif_035_fourgram_0.wav","start_time":180.495,"duration":0.23,"tags":{}},
+  {"id":"motif_035_1","motif_id":"motif_035","type":"fourgram","pattern":"U84_U68_U68_U68","frequency":34,"audio_file":"motif_samples/motif_035_fourgram_1.wav","start_time":184.678,"duration":0.23,"tags":{}},
+  {"id":"motif_035_2","motif_id":"motif_035","type":"fourgram","pattern":"U84_U68_U68_U68","frequency":34,"audio_file":"motif_samples/motif_035_fourgram_2.wav","start_time":184.778,"duration":0.23,"tags":{}},
+  {"id":"motif_036_0","motif_id":"motif_036","type":"fourgram","pattern":"U59_U59_U77_U77","frequency":33,"audio_file":"motif_samples/motif_036_fourgram_0.wav","start_time":5.429,"duration":0.23,"tags":{}},
+  {"id":"motif_036_1","motif_id":"motif_036","type":"fourgram","pattern":"U59_U59_U77_U77","frequency":33,"audio_file":"motif_samples/motif_036_fourgram_1.wav","start_time":18.338,"duration":0.23,"tags":{}},
+  {"id":"motif_036_2","motif_id":"motif_036","type":"fourgram","pattern":"U59_U59_U77_U77","frequency":33,"audio_file":"motif_samples/motif_036_fourgram_2.wav","start_time":34.87,"duration":0.23,"tags":{}},
+  {"id":"motif_037_0","motif_id":"motif_037","type":"fourgram","pattern":"U32_U32_U32_U47","frequency":33,"audio_file":"motif_samples/motif_037_fourgram_0.wav","start_time":176.011,"duration":0.23,"tags":{}},
+  {"id":"motif_037_1","motif_id":"motif_037","type":"fourgram","pattern":"U32_U32_U32_U47","frequency":33,"audio_file":"motif_samples/motif_037_fourgram_1.wav","start_time":185.118,"duration":0.23,"tags":{}},
+  {"id":"motif_037_2","motif_id":"motif_037","type":"fourgram","pattern":"U32_U32_U32_U47","frequency":33,"audio_file":"motif_samples/motif_037_fourgram_2.wav","start_time":193.484,"duration":0.23,"tags":{}},
+  {"id":"motif_038_0","motif_id":"motif_038","type":"fourgram","pattern":"U79_U79_U79_U83","frequency":27,"audio_file":"motif_samples/motif_038_fourgram_0.wav","start_time":11.934,"duration":0.23,"tags":{}},
+  {"id":"motif_038_1","motif_id":"motif_038","type":"fourgram","pattern":"U79_U79_U79_U83","frequency":27,"audio_file":"motif_samples/motif_038_fourgram_1.wav","start_time":16.277,"duration":0.23,"tags":{}},
+  {"id":"motif_038_2","motif_id":"motif_038","type":"fourgram","pattern":"U79_U79_U79_U83","frequency":27,"audio_file":"motif_samples/motif_038_fourgram_2.wav","start_time":17.798,"duration":0.23,"tags":{}},
+  {"id":"motif_039_0","motif_id":"motif_039","type":"fourgram","pattern":"U11_U91_U91_U91","frequency":27,"audio_file":"motif_samples/motif_039_fourgram_0.wav","start_time":39.213,"duration":0.23,"tags":{}},
+  {"id":"motif_039_1","motif_id":"motif_039","type":"fourgram","pattern":"U11_U91_U91_U91","frequency":27,"audio_file":"motif_samples/motif_039_fourgram_1.wav","start_time":45.198,"duration":0.23,"tags":{}},
+  {"id":"motif_039_2","motif_id":"motif_039","type":"fourgram","pattern":"U11_U91_U91_U91","frequency":27,"audio_file":"motif_samples/motif_039_fourgram_2.wav","start_time":60.148,"duration":0.23,"tags":{}}
+];
+
+// ============ CATEGORY DEFINITIONS ============
+const CATEGORIES = [
+    { id: 'deixis', name: 'Deixis', icon: '👉', color: '#e74c3c',
+      subcategories: ['proximal (this/here)', 'distal (that/there)', 'speaker reference', 'addressee reference', 'temporal deixis'] },
+    { id: 'tense', name: 'Tense', icon: '⏰', color: '#3498db',
+      subcategories: ['past', 'present', 'future', 'remote past', 'recent past', 'immediate future'] },
+    { id: 'aspect', name: 'Aspect', icon: '🔄', color: '#9b59b6',
+      subcategories: ['perfective (completed)', 'imperfective (ongoing)', 'progressive', 'habitual', 'iterative', 'inceptive (beginning)'] },
+    { id: 'modality', name: 'Modality', icon: '💭', color: '#1abc9c',
+      subcategories: ['possibility', 'necessity', 'ability', 'permission', 'obligation', 'evidential (source of knowledge)'] },
+    { id: 'polarity', name: 'Polarity', icon: '±', color: '#e67e22',
+      subcategories: ['affirmative', 'negative', 'interrogative', 'emphatic'] },
+    { id: 'number', name: 'Number', icon: '🔢', color: '#27ae60',
+      subcategories: ['singular', 'dual', 'plural', 'collective'] },
+    { id: 'person', name: 'Person', icon: '👤', color: '#f39c12',
+      subcategories: ['1st person', '2nd person', '3rd person', 'inclusive we', 'exclusive we'] },
+    { id: 'case', name: 'Case/Role', icon: '🎭', color: '#8e44ad',
+      subcategories: ['agent (doer)', 'patient (affected)', 'benefactive (for whom)', 'locative (where)', 'instrumental (with what)', 'genitive (possession)'] },
+    { id: 'other', name: 'Other', icon: '📝', color: '#95a5a6',
+      subcategories: ['discourse marker', 'topic marker', 'focus marker', 'connector', 'hesitation', 'emphasis'] },
+    { id: 'unknown', name: 'Unknown', icon: '❓', color: '#bdc3c7',
+      subcategories: ['unclear', 'needs more examples', 'possibly phonetic only'] }
+];
+
+// ============ STATE ============
+let motifGroups = [];
+let currentMotifIdx = 0;
+let currentAudio = null;
+let allResults = {};
+let currentSelection = { category: null, subcategory: null, notes: '' };
+
+// ============ INITIALIZATION ============
+function init() {
+    // Group samples by motif_id
+    const grouped = {};
+    MOTIF_SAMPLES.forEach(sample => {
+        if (!grouped[sample.motif_id]) {
+            grouped[sample.motif_id] = {
+                motif_id: sample.motif_id,
+                type: sample.type,
+                pattern: sample.pattern,
+                frequency: sample.frequency,
+                samples: []
+            };
+        }
+        grouped[sample.motif_id].samples.push(sample);
+    });
+    
+    motifGroups = Object.values(grouped);
+    
+    // Update stats
+    document.getElementById('motifCount').textContent = motifGroups.length;
+    document.getElementById('sampleCount').textContent = MOTIF_SAMPLES.length;
+}
+
+function startTagging() {
+    document.getElementById('welcomeScreen').classList.add('hidden');
+    document.getElementById('taggingScreen').classList.remove('hidden');
+    document.getElementById('motifNav').classList.remove('hidden');
+    loadMotif(0);
+}
+
+// ============ MOTIF LOADING ============
+function loadMotif(idx) {
+    if (idx < 0 || idx >= motifGroups.length) return;
+    
+    currentMotifIdx = idx;
+    const motif = motifGroups[idx];
+    
+    // Update navigation
+    document.getElementById('motifCounter').textContent = `${idx + 1} / ${motifGroups.length}`;
+    document.getElementById('prevBtn').disabled = idx === 0;
+    document.getElementById('nextBtn').disabled = idx === motifGroups.length - 1;
+    
+    // Update progress
+    const progress = ((idx + 1) / motifGroups.length) * 100;
+    document.getElementById('progressFill').style.width = progress + '%';
+    
+    // Load any saved state
+    currentSelection = allResults[motif.motif_id] || { category: null, subcategory: null, notes: '' };
+    
+    // Build card HTML
+    const card = document.getElementById('motifCard');
+    card.innerHTML = `
+        <div class="motif-header">
+            <span class="motif-title">Motif ${idx + 1}</span>
+            <span class="motif-type">${motif.type}</span>
+        </div>
+        
+        <div class="pattern-display">${motif.pattern}</div>
+        
+        <div class="frequency-badge">Occurs ${motif.frequency} times in the recording</div>
+        
+        <div class="samples-section">
+            <h3>🎧 Listen to samples (click to play)</h3>
+            <div class="samples-grid">
+                ${motif.samples.map((s, i) => `
+                    <button class="sample-btn" onclick="playSample('${s.audio_file}', this)" id="sample-${i}">
+                        <span class="play-icon">▶</span>
+                        Sample ${i + 1}
+                        <span style="color: #888; font-size: 0.75rem;">${s.duration}s</span>
+                    </button>
+                `).join('')}
+            </div>
+            <div id="audioError" class="audio-error hidden">
+                Audio file not found. Make sure the motif_samples folder is in the same directory.
+            </div>
+        </div>
+        
+        <div class="category-section">
+            <h3>What grammatical meaning does this pattern carry?</h3>
+            <div class="categories-grid">
+                ${CATEGORIES.map(cat => `
+                    <button class="category-btn ${currentSelection.category === cat.id ? 'selected' : ''}" 
+                            style="color: ${cat.color};" 
+                            onclick="selectCategory('${cat.id}')">
+                        <span class="cat-icon">${cat.icon}</span>
+                        ${cat.name}
+                    </button>
+                `).join('')}
+            </div>
+        </div>
+        
+        <div class="subcategories ${currentSelection.category ? '' : 'hidden'}" id="subcategoriesContainer">
+            <h4>Select specific type:</h4>
+            <div class="subcategory-chips" id="subcategoryChips"></div>
+        </div>
+        
+        <div class="notes-section">
+            <label>Notes (optional)</label>
+            <textarea id="notesInput" placeholder="Any observations about this pattern...">${currentSelection.notes || ''}</textarea>
+        </div>
+    `;
+    
+    // Show subcategories if category was previously selected
+    if (currentSelection.category) {
+        showSubcategories(currentSelection.category);
+    }
+}
+
+// ============ AUDIO PLAYBACK ============
+function playSample(audioFile, button) {
+    // Stop any currently playing audio
+    if (currentAudio) {
+        currentAudio.pause();
+        document.querySelectorAll('.sample-btn').forEach(b => b.classList.remove('playing'));
+    }
+    
+    // Hide any previous error
+    document.getElementById('audioError').classList.add('hidden');
+    
+    // Create and play new audio
+    currentAudio = new Audio(audioFile);
+    button.classList.add('playing');
+    
+    currentAudio.onended = () => {
+        button.classList.remove('playing');
+    };
+    
+    currentAudio.onerror = () => {
+        button.classList.remove('playing');
+        document.getElementById('audioError').classList.remove('hidden');
+    };
+    
+    currentAudio.play().catch(err => {
+        button.classList.remove('playing');
+        document.getElementById('audioError').classList.remove('hidden');
+        console.error('Audio playback failed:', err);
+    });
+}
+
+// ============ CATEGORY SELECTION ============
+function selectCategory(catId) {
+    currentSelection.category = catId;
+    currentSelection.subcategory = null;
+    
+    // Update button states
+    document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('selected'));
+    event.target.closest('.category-btn').classList.add('selected');
+    
+    // Show subcategories
+    showSubcategories(catId);
+}
+
+function showSubcategories(catId) {
+    const cat = CATEGORIES.find(c => c.id === catId);
+    if (!cat) return;
+    
+    const container = document.getElementById('subcategoriesContainer');
+    const chips = document.getElementById('subcategoryChips');
+    
+    chips.innerHTML = cat.subcategories.map(sub => `
+        <button class="subcategory-chip ${currentSelection.subcategory === sub ? 'selected' : ''}" 
+                onclick="selectSubcategory('${sub}')">
+            ${sub}
+        </button>
+    `).join('');
+    
+    container.classList.remove('hidden');
+}
+
+function selectSubcategory(sub) {
+    currentSelection.subcategory = sub;
+    
+    document.querySelectorAll('.subcategory-chip').forEach(chip => chip.classList.remove('selected'));
+    event.target.classList.add('selected');
+}
+
+// ============ SAVE & NAVIGATION ============
+function saveAndNext() {
+    const motif = motifGroups[currentMotifIdx];
+    
+    // Get notes
+    currentSelection.notes = document.getElementById('notesInput')?.value || '';
+    
+    // Save result
+    if (currentSelection.category) {
+        allResults[motif.motif_id] = {
+            motif_id: motif.motif_id,
+            pattern: motif.pattern,
+            type: motif.type,
+            frequency: motif.frequency,
+            category: currentSelection.category,
+            subcategory: currentSelection.subcategory,
+            notes: currentSelection.notes,
+            tagged_at: new Date().toISOString()
+        };
+    }
+    
+    // Move to next or show results
+    if (currentMotifIdx < motifGroups.length - 1) {
+        loadMotif(currentMotifIdx + 1);
+        window.scrollTo(0, 0);
+    } else {
+        showResults();
+    }
+}
+
+function skipMotif() {
+    if (currentMotifIdx < motifGroups.length - 1) {
+        loadMotif(currentMotifIdx + 1);
+        window.scrollTo(0, 0);
+    } else {
+        showResults();
+    }
+}
+
+// ============ RESULTS ============
+function showResults() {
+    document.getElementById('taggingScreen').classList.add('hidden');
+    document.getElementById('motifNav').classList.add('hidden');
+    document.getElementById('resultsScreen').classList.remove('hidden');
+    document.getElementById('resultsScreen').style.display = 'flex';
+    
+    // Summary
+    const results = Object.values(allResults);
+    const categoryCounts = {};
+    
+    results.forEach(r => {
+        if (!categoryCounts[r.category]) categoryCounts[r.category] = 0;
+        categoryCounts[r.category]++;
+    });
+    
+    let summaryHtml = `<p><strong>${results.length}</strong> of ${motifGroups.length} motifs tagged</p><div style="margin-top: 12px;">`;
+    
+    Object.entries(categoryCounts).sort((a, b) => b[1] - a[1]).forEach(([cat, count]) => {
+        const catInfo = CATEGORIES.find(c => c.id === cat);
+        summaryHtml += `
+            <span class="tag-badge" style="background: ${catInfo?.color || '#95a5a6'}; margin: 4px;">
+                ${catInfo?.icon || '?'} ${cat}: ${count}
+            </span>
+        `;
+    });
+    
+    summaryHtml += '</div>';
+    document.getElementById('resultsSummary').innerHTML = summaryHtml;
+    
+    // JSON preview
+    const exportData = {
+        export_type: 'motif_tags',
+        export_date: new Date().toISOString(),
+        source: 'AViTA Motif Tagger',
+        language: 'Sateré-Mawé (Acts 12)',
+        total_motifs: motifGroups.length,
+        tagged_count: results.length,
+        category_distribution: categoryCounts,
+        motifs: results
+    };
+    
+    document.getElementById('jsonPreview').textContent = JSON.stringify(exportData, null, 2);
+}
+
+function downloadResults() {
+    const results = Object.values(allResults);
+    
+    const exportData = {
+        export_type: 'motif_tags',
+        export_date: new Date().toISOString(),
+        source: 'AViTA Motif Tagger',
+        language: 'Sateré-Mawé (Acts 12)',
+        total_motifs: motifGroups.length,
+        tagged_count: results.length,
+        motifs: results
+    };
+    
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `motif_tags_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    
+    URL.revokeObjectURL(url);
+}
+
+// Initialize on load
+window.onload = init;
+</script>
+
+</body>
+</html>
